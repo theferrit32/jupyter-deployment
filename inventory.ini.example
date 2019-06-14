@@ -1,4 +1,7 @@
 xxx.xxx.xxx.xxx
 
 [all:vars]
-ansible_user=ubuntu
+# this depends on the cloud and OS, sometimes ubuntu/centos, sometimes your account user
+ansible_user=<USER>
+# Uncomment and replace with a hard-to-guess value
+#jupyter_token=<token>
