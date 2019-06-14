@@ -20,3 +20,7 @@ This playbook does a series of high level steps:
 - installs the R jupyter kernel
 - installs nginx, and port 443 host block, and creates a self-signed cert
 - installs systemd service files for autostarting the jupyter server
+
+Notes:
+- The instance should have at least 1GiB of free space.
+- Jupyter notebooks vary in resource demands. Those doing multi-threaded compute should choose an appropriate instance with more CPUs. Many notebooks are more query based and single-threaded, so more memory makes more sense for the instance type.
