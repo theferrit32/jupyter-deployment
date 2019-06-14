@@ -60,6 +60,8 @@
     #     mode: u=rwx,g=r,o=r
     # - name: Run setup.sh to install R jupyter kernel
     #   shell: ~/setup.sh
+    - debug:
+        msg: Installing the jupyter R kernel takes a while as it must build some code
     - name: Install R jupyter kernel
       shell: source ~/.profile && R -e "install.packages('IRkernel')"
       args:
