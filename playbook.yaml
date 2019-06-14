@@ -33,11 +33,9 @@
       apt_repository:
         repo: deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/
         state: present
-      #command: add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
-      #become: yes
-    - name: Update package lists
-      command: apt update
-      become: yes
+    # - name: Update package lists
+    #   command: apt update
+    #   become: yes
     - name: Install R
       become: yes
       apt:
@@ -55,18 +53,80 @@
       lineinfile:
         path: ~/.profile
         line: 'export PATH=~/.local/bin:$PATH'
-    - name: Copy setup.sh to remote
+    # - name: Copy setup.sh to remote
+    #   copy:
+    #     src: setup.sh
+    #     dest: ~/setup.sh
+    #     mode: u=rwx,g=r,o=r
+    # - name: Run setup.sh to install R jupyter kernel
+    #   shell: ~/setup.sh
+    - name: Install R jupyter kernel
+      shell: source ~/.profile && R -e "install.packages('IRkernel')"
+      args:
+        executable: /bin/bash
+    - name: Initialize R kernel
+      shell: source ~/.profile && R -e "IRkernel::installspec()"
+      args:
+        executable: /bin/bash
+
+    # Some additional jupyter setup
+    - name: Create jupyter notebook dir
+      file:
+        path: ~/notebook-dir
+        state: directory
+    - name: Create jupyter conf dir
+      file:
+        path: ~/.jupyter
+        state: directory
+    - name: Create jupyter token
+      # needs to be shell for this to work, not command
+      # note: overwrites entire file contents
       copy:
-        src: setup.sh
-        dest: ~/setup.sh
-        mode: u=rwx,g=r,o=r
-    - name: Run setup.sh to install R jupyter kernel
-      shell: ~/setup.sh
-    #- name: Install R jupyter kernel
-    #  shell: bash -c 'source ~/.bashrc && R -e "install.packages('IRkernel')"'
-    #  args:
-    #    executable: /bin/bash
-    #- name: Initialize R kernel
-    #  shell: source ~/.bashrc && R -e "IRkernel::installspec()"
-    #  args:
-    #    executable: /bin/bash
+        content: "c.NotebookApp.token = '{{ jupyter_token }}'"
+        dest: ~/.jupyter/jupyter_notebook_config.py
+
+
+    # Set up nginx
+    - name: Install nginx
+      become: yes
+      apt:
+        name: nginx
+    - name: Start and enable nginx
+      become: yes
+      shell: systemctl enable nginx && systemctl start nginx
+    - name: Create self-signed certificate
+      become: yes
+      command: openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /root/nginx-key.pem -out /root/nginx-cert.pem -subj "/CN={{ inventory_hostname }}"
+      args:
+        creates: /root/nginx-cert.pem
+    - name: Create NGINX host for jupyter
+      become: yes
+      copy:
+        src: jupyter.conf
+        dest: /etc/nginx/conf.d/jupyter.conf
+    - name: Remove default NGINX sites
+      become: yes
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '\s*include \/etc\/nginx\/sites-enabled'
+        state: absent
+    - name: Reload NGINX
+      become: yes
+      command: nginx -s reload
+
+    # Set up SystemD
+    - name: Install jupyter systemd service
+      become: yes
+      template:
+        src: jupyter.service
+        dest: /etc/systemd/system/jupyter.service
+    - name: Create jupyter conf file
+      template:
+        src: jupyter_notebook_config.py
+        dest: ~/.jupyter/
+    - name: Reload systemd
+      become: yes
+      command: systemctl daemon-reload
+    - name: Start and enable jupyter service
+      become: yes
+      shell: systemctl enable jupyter && systemctl restart jupyter
