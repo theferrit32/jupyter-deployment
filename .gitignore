@@ -1,2 +1,8 @@
+# editor files
+.vscode/
+
+# environment
 venv/
+
+# sensitive files
 inventory.ini
