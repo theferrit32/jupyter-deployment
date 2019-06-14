@@ -1,0 +1,72 @@
+- name: Jupyter R Deployment
+  hosts: all
+  gather_facts: false
+  tasks:
+    # - name: Rescan host key
+    #   local_action: command ssh-keygen -R {{ inventory_hostname }}
+    #- name: update host keys
+    #  known_hosts:
+    #    name: "{{ inventory_hostname }}"
+    #    state: absent
+    - name: Install pip
+      become: yes
+      apt:
+        name: python3-pip
+        update_cache: yes
+    # - name: Install jupyter
+    #   command: pip3 install --user jupyter
+    - name: Install Jupyter
+      pip:
+        name: jupyter
+        executable: pip3
+
+
+    # Install R and R jupyter kernel
+    - name: Import R public key
+      apt_key:
+        id: 51716619E084DAB9
+        keyserver: keyserver.ubuntu.com
+      #command: apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 51716619E084DAB9
+      become: yes
+    - name: Add R Repo
+      become: yes
+      apt_repository:
+        repo: deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/
+        state: present
+      #command: add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+      #become: yes
+    - name: Update package lists
+      command: apt update
+      become: yes
+    - name: Install R
+      become: yes
+      apt:
+        name: r-base
+        update_cache: yes
+    - name: Create R library
+      file:
+        path: ~/.local/lib/R
+        state: directory
+    - name: Add library path to environment
+      lineinfile:
+        path: ~/.profile
+        line: export R_LIBS_USER=~/.local/lib/R
+    - name: Add ~/.local/bin to PATH
+      lineinfile:
+        path: ~/.profile
+        line: 'export PATH=~/.local/bin:$PATH'
+    - name: Copy setup.sh to remote
+      copy:
+        src: setup.sh
+        dest: ~/setup.sh
+        mode: u=rwx,g=r,o=r
+    - name: Run setup.sh to install R jupyter kernel
+      shell: ~/setup.sh
+    #- name: Install R jupyter kernel
+    #  shell: bash -c 'source ~/.bashrc && R -e "install.packages('IRkernel')"'
+    #  args:
+    #    executable: /bin/bash
+    #- name: Initialize R kernel
+    #  shell: source ~/.bashrc && R -e "IRkernel::installspec()"
+    #  args:
+    #    executable: /bin/bash

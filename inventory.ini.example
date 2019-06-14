@@ -1,0 +1,4 @@
+xxx.xxx.xxx.xxx
+
+[all:vars]
+ansible_user=ubuntu
