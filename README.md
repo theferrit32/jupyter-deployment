@@ -1,6 +1,6 @@
 # jupyter-deployment
 
-To rebuild the instance image, re-run the ansible playbook against a fresh instance.
+To rebuild the instance image, re-run the ansible playbook against a fresh instance (tested with Ubuntu 18.04 LTS (gcp: `ubuntu-1804-lts`)). Recommended resources: >= 1 vcpu, >= 4GB mem, >= 20GB disk.
 
 First place the IP address of the instance into `inventory.ini`, and set the user of the ssh key used to authenticate to the instance.
 
