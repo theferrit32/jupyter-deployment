@@ -8,3 +8,6 @@ User={{ ansible_user }}
 WorkingDirectory=/home/{{ ansible_user }}/notebook-dir
 ExecStart=/home/{{ansible_user}}/.local/bin/jupyter notebook --notebook-dir ~/notebook-dir
 Restart=always
+
+[Install]
+WantedBy=multi-user.target
