@@ -33,9 +33,6 @@
       apt_repository:
         repo: deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/
         state: present
-    # - name: Update package lists
-    #   command: apt update
-    #   become: yes
     - name: Install R
       become: yes
       apt:
@@ -53,6 +50,11 @@
       lineinfile:
         path: ~/.profile
         line: 'export PATH=~/.local/bin:$PATH'
+    - name: Add jupyter-start.sh script to remote path
+      copy:
+        src: jupyter-start.sh
+        dest: ~/.local/bin/jupyter-start.sh
+        mode: u=rwx,g=r
     # - name: Copy setup.sh to remote
     #   copy:
     #     src: setup.sh
@@ -117,18 +119,25 @@
       command: nginx -s reload
 
     # Set up SystemD
+    - name: Create user systemd directory
+      file:
+        path: ~/.config/systemd/user/
+        state: directory
     - name: Install jupyter systemd service
-      become: yes
+      #become: yes
       template:
         src: jupyter.service
-        dest: /etc/systemd/system/jupyter.service
+        #dest: /etc/systemd/system/jupyter.service
+        dest: ~/.config/systemd/user/jupyter.service
     - name: Create jupyter conf file
       template:
         src: jupyter_notebook_config.py
         dest: ~/.jupyter/
     - name: Reload systemd
-      become: yes
-      command: systemctl daemon-reload
-    - name: Start and enable jupyter service
-      become: yes
-      shell: systemctl enable jupyter && systemctl restart jupyter
+      #become: yes
+      command: systemctl --user daemon-reload
+    - name: Enable jupyter service
+      #become: yes
+      shell: systemctl --user enable jupyter
+    - name: Start jupyter service
+      shell: systemctl --user restart jupyter

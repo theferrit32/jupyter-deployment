@@ -4,10 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User={{ ansible_user }}
 WorkingDirectory=/home/{{ ansible_user }}/notebook-dir
-ExecStart=/home/{{ansible_user}}/.local/bin/jupyter notebook --notebook-dir ~/notebook-dir
-Restart=always
+ExecStart=/bin/bash /home/{{ansible_user}}/.local/bin/jupyter-start.sh
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
