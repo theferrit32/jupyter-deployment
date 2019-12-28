@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/{{ ansible_user }}/notebook-dir
 ExecStart=/bin/bash /home/{{ansible_user}}/.local/bin/jupyter-start.sh
-Restart=on-failure
+Restart=always
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
