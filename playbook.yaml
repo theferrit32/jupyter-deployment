@@ -13,8 +13,6 @@
       apt:
         name: python3-pip
         update_cache: yes
-    # - name: Install jupyter
-    #   command: pip3 install --user jupyter
     - name: Install Jupyter
       pip:
         name: jupyter
@@ -50,18 +48,13 @@
       lineinfile:
         path: ~/.profile
         line: 'export PATH=~/.local/bin:$PATH'
-    - name: Add jupyter-start.sh script to remote path
-      copy:
-        src: jupyter-start.sh
-        dest: ~/.local/bin/jupyter-start.sh
-        mode: u=rwx,g=r
-    # - name: Copy setup.sh to remote
+
+    # - name: Add jupyter-start.sh script to remote path
     #   copy:
-    #     src: setup.sh
-    #     dest: ~/setup.sh
-    #     mode: u=rwx,g=r,o=r
-    # - name: Run setup.sh to install R jupyter kernel
-    #   shell: ~/setup.sh
+    #     src: jupyter-start.sh
+    #     dest: ~/.local/bin/jupyter-start.sh
+    #     mode: u=rwx,g=r
+
     - debug:
         msg: Installing the jupyter R kernel takes a while as it must build some code
     - name: Install R jupyter kernel
@@ -83,8 +76,7 @@
         path: ~/.jupyter
         state: directory
     - name: Create jupyter token
-      # needs to be shell for this to work, not command
-      # note: overwrites entire file contents
+      # note: overwrites entire file contents, could switch to lineinfile
       copy:
         content: "c.NotebookApp.token = '{{ jupyter_token }}'"
         dest: ~/.jupyter/jupyter_notebook_config.py
@@ -119,25 +111,35 @@
       command: nginx -s reload
 
     # Set up SystemD
-    - name: Create user systemd directory
-      file:
-        path: ~/.config/systemd/user/
-        state: directory
+
+    # - name: Create user systemd directory
+    #   file:
+    #     path: ~/.config/systemd/user/
+    #     state: directory
     - name: Install jupyter systemd service
-      #become: yes
+      become: yes
       template:
         src: jupyter.service
-        #dest: /etc/systemd/system/jupyter.service
-        dest: ~/.config/systemd/user/jupyter.service
+        dest: /etc/systemd/system/jupyter.service
+        #dest: ~/.config/systemd/user/jupyter.service
     - name: Create jupyter conf file
       template:
         src: jupyter_notebook_config.py
         dest: ~/.jupyter/
     - name: Reload systemd
-      #become: yes
-      command: systemctl --user daemon-reload
+      become: yes
+      command: systemctl daemon-reload
     - name: Enable jupyter service
-      #become: yes
-      shell: systemctl --user enable jupyter
+      become: yes
+      shell: systemctl enable jupyter
     - name: Start jupyter service
-      shell: systemctl --user restart jupyter
+      become: yes
+      shell: systemctl restart jupyter
+    - name: Open iptables port 443/tcp
+      become: yes
+      #shell: iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+      iptables:
+        chain: INPUT
+        protocol: tcp
+        destination_port: '443'
+        jump: ACCEPT
